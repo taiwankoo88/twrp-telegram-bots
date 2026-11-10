@@ -1,0 +1,25 @@
+# Secrets and local settings (CLAUDE.md "Security and privacy": never in a repository)
+token.dpapi
+config.json
+state.json
+status.json
+email.json
+steel.json
+table.json
+*.dpapi
+
+# Order archives, deleted orders, steel submissions, weekly summaries and logs (private business data)
+outputs/
+deleted/
+steel/
+summaries/
+backups/
+*.log
+email-job.json
+ocr-lines.json
+
+# Dependencies and caches
+node_modules/
+__pycache__/
+*.pyc
+*.inspect.ndjson
