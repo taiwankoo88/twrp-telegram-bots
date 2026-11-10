@@ -23,3 +23,8 @@ node_modules/
 __pycache__/
 *.pyc
 *.inspect.ndjson
+
+# Track the WN generator while keeping its templates and submissions local.
+!/telegram-fastener-bot/wn/outputs/
+/telegram-fastener-bot/wn/outputs/*
+!/telegram-fastener-bot/wn/outputs/update_steel_forms.py
