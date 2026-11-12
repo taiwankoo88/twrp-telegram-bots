@@ -3,27 +3,8 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {FileBlob, SpreadsheetFile, Workbook} from '@oai/artifact-tool';
 const root = path.dirname(fileURLToPath(import.meta.url));
-export const literal = s => /^[=+@-]/.test(s) ? "'" + s : s;
-
-// Designation, standard, strength and remark for an item, shared by order files and weekly summaries.
-export function describeItem(material, item) {
-  const remark = item.parts.length > 1 ? `Combined: ${item.parts.join(' + ')}` : item.perSet || null;
-  // Gasket wording follows the gasket template; the PN has its own column in the order file.
-  if (item.kind === 'gasket') return {
-    designation: `SIZE: DN${item.dn} ${item.thickness}MM THK Full-Face with Bolt Holes`,
-    standard: 'BS 1154 Class Y3',
-    grade: `PN${item.pn}`,
-    remark,
-  };
-  const label = {bolt:'FULL THREADED HEXAGON BOLT', nut:'HEXAGON NUT',washer:'FLAT WASHER',rod:'STUD ROD'}[item.kind];
-  const suffix = item.kind === 'washer' ? ` X ${item.length}mm thk.` : item.length ? `, L=${item.length}mm` : '';
-  return {
-    designation: `${label}: M${item.diameter}${suffix}`,
-    standard: material === 'SS316' ? 'BS EN ISO 3506' : item.kind === 'washer' ? 'BS 4320' : 'BS EN ISO 4190',
-    grade: material === 'HDG' ? 'G 8.8' : item.kind === 'nut' ? 'A4-80' : 'A4-70',
-    remark,
-  };
-}
+import {describeItem, literal} from './items.mjs';
+export {describeItem, literal};
 
 // Excel applies a shared formula to every cell in its range, even cells later filled with
 // quantities or totals, so keep only the template's cached values.

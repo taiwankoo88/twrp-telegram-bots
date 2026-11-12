@@ -43,14 +43,8 @@ export async function loadOrders(outputs, week) {
   return orders.sort((a, b) => a.received - b.received);
 }
 
-// Title and item lines of one section, as listed in weekly summaries, administrator notices and emails.
-export function sectionLines(material, section) {
-  return [section.title, ...section.items.map(item => {
-    const {designation, grade} = describeItem(material, item);
-    // A gasket's PN is its own column in the order file, so add it here.
-    return `• ${designation}${item.kind === 'gasket' ? `, ${grade}` : ''} × ${item.qty.toLocaleString('en-US')}`;
-  })];
-}
+import {sectionLines} from './items.mjs';
+export {sectionLines};
 const orderLines = order => order.sections.flatMap(section => sectionLines(order.material, section));
 
 // Telegram limits message and caption length; cut at a line break, since the Excel file has every item.

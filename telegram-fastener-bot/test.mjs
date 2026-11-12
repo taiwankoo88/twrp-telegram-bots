@@ -333,4 +333,7 @@ if (steelCfg?.root) {
   await fs.rm(tmpRoot,{recursive:true});
   console.log(`Steel form generation passed: C3D1 and C3D2 forms verified${render?' and rendered with Word':''}; repeat reference saved as revision 2.`);
 } else console.log('Steel form generation skipped: steel.json not found.');
+// HDG stud rods (2026-11-12): FULL THREADED STUD ROD, BS EN ISO 4190, G 8.8; SS316 too.
+{const {describeItem:d2}=await import('./items.mjs');assert.equal(d2('SS316',parseOrder('C3D1 SS316\nTitle: W\nM16x2000mm stud rod = 2','T').sections[0].items[0]).designation,'FULL THREADED STUD ROD: M16, L=2000mm');}
+{const {describeItem}=await import('./items.mjs');const r=parseOrder('C3D1 HDG\nTitle: WDL12\nM16x2000mm stud rod = 20','Test').sections[0].items[0];assert.equal(describeItem('HDG',r).designation,'FULL THREADED STUD ROD: M16, L=2000mm');assert.equal(describeItem('HDG',r).standard,'BS EN ISO 4190');assert.equal(describeItem('HDG',r).grade,'G 8.8');console.log('HDG stud rod checks passed');}
 process.exit(0);

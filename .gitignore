@@ -6,6 +6,9 @@ status.json
 email.json
 steel.json
 table.json
+web.json
+web-url.json
+cloudflared.exe
 *.dpapi
 
 # Order archives, deleted orders, steel submissions, weekly summaries and logs (private business data)

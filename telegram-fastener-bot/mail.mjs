@@ -14,18 +14,13 @@ function stamp(when) {
   return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()} ${two(d.getUTCHours())}:${two(d.getUTCMinutes())}`;
 }
 
-// Subject: project, material, requester and titles, e.g. C3D1 HDG Fasteners · Nicholas Koo · WDL12 Chemical Hanging Piperack.
-export function mailSubject(order) {
-  const kind = order.material === 'EPDM' ? 'EPDM Gaskets' : `${order.material} Fasteners`;
-  const subject = [`${order.project} ${kind}`, order.requester, order.sections.map(s => s.title).join('; ')].join(' · ');
-  // Exchange rejects subjects longer than 255 characters.
-  return subject.length <= 255 ? subject : `${subject.slice(0, 254)}…`;
-}
+import {mailSubject} from './items.mjs';
+export {mailSubject};
 
-export function mailBody(order, sender, filename, when = new Date()) {
+export function mailBody(order, sender, filename, when = new Date(), via = 'Telegram') {
   return [
     ...order.sections.map(section => sectionLines(order.material, section).join('\n')),
-    `Requester: ${order.requester} · Sent by: ${sender} (Telegram) · ${stamp(when)}\nAttachment: ${path.basename(filename)}`,
+    `Requester: ${order.requester} · Sent by: ${sender} (${via}) · ${stamp(when)}\nAttachment: ${path.basename(filename)}`,
   ].join('\n\n');
 }
 

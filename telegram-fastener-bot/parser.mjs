@@ -74,7 +74,6 @@ function fastenerItem(body, original, material) {
   if (kind === 'washer' && length === null) length = diameter <= 20 ? 3 : 4;
   if (kind === 'washer' && (!length || length > 20)) throw Error('Specify the washer thickness. Example: M16x3mm washer = 200.');
   if (kind === 'washer' && diameter > 20 && length < 4) throw Error(`Washers above M20 must be at least 4mm thick: ${original}`);
-  if (kind === 'rod' && material === 'HDG') throw Error('The HDG template does not yet have a stud rod standard. Please contact the administrator.');
   return {kind, diameter, length};
 }
 // EPDM gasket identified by DN, PN and thickness in mm (3 unless written, e.g. DN400 PN10 5mm = 10).
