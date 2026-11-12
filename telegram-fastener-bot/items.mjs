@@ -63,7 +63,9 @@ export function orderText(form) {
     if (sec.sets !== '' && sec.sets !== undefined && sec.sets !== null && Number(sec.sets) !== 1) lines.push(`Sets: ${num(sec.sets, 'Number of sets', title)}`);
     if (!Array.isArray(sec.items) || !sec.items.length) throw Error(`Add at least one item under "${title}".`);
     for (const [j, item] of sec.items.entries()) {
-      const where = `${title}, row ${j + 1}`, qty = num(item?.qty, 'Quantity', where);
+      const where = `${title}, row ${j + 1}`, entered = num(item?.qty, 'Quantity', where);
+      // Optional +5% (form.extra, added 2026-11-12): every quantity rounded up; integer arithmetic avoids 100 * 1.05 = 105.00000000000001.
+      const qty = form.extra === true ? Math.ceil(entered * 105 / 100) : entered;
       if (form.material === 'EPDM') {
         lines.push(`DN${num(item.dn, 'DN', where)} PN${num(item.pn, 'PN', where, false)} ${num(item.thickness || 3, 'Thickness', where, false)}mm = ${qty}`);
         continue;

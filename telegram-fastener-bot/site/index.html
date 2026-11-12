@@ -15,6 +15,8 @@
   .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:14px; }
   .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
   label, .field { display:block; font-size:13px; font-weight:600; color:var(--muted); }
+  label.check { display:flex; align-items:center; gap:8px; align-self:end; color:var(--text, inherit); }
+  label.check input { width:auto; margin:0; }
   input, select { display:block; width:100%; margin-top:4px; padding:9px 10px; font:inherit; color:var(--ink); background:#fff; border:1px solid var(--line); border-radius:7px; }
   input:focus, select:focus, button:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
   .seg { display:flex; gap:6px; margin-top:4px; flex-wrap:wrap; }
@@ -61,6 +63,7 @@
 <main id="form">
   <div class="card grid">
     <label>Requester name<input id="requester" maxlength="100" autocomplete="name"></label>
+    <label class="check"><input type="checkbox" id="extra"> Add 5% to all quantities (optional, rounded up)</label>
     <div class="field">Project<div class="seg" id="project"></div></div>
     <div class="field">Material<div class="seg" id="material"></div></div>
   </div>
@@ -147,7 +150,7 @@ function seg(id, options, key) {
       if (!confirm('Gaskets and fasteners are separate orders. Switching clears the items entered so far. Continue?')) return;
       st.sections.forEach(s => s.items = []);
     }
-    if (key === 'material' && value === 'HDG') st.sections.forEach(s => s.items = s.items.filter(i => i.kind !== 'rod'));
+
     st[key] = value; keep(); render();
   }})));
 }
@@ -208,6 +211,8 @@ function base64(bytes) {
 }
 
 $('requester').value = store.get('requester') || '';
+$('extra').checked = !!st.extra;
+$('extra').onchange = e => { st.extra = e.target.checked; keep(); };
 $('requester').oninput = e => store.set('requester', e.target.value);
 $('addSection').onclick = () => { st.sections.push(blank()); keep(); render(); };
 
@@ -215,7 +220,7 @@ $('review').onclick = () => {
   fail('error', '');
   let r;
   try { r = current(); } catch (e) { fail('error', e.message); return; }
-  $('confirmHead').textContent = `${r.project} · ${r.material === 'EPDM' ? 'EPDM gasket' : r.material + ' fasteners'} · Requester: ${r.requester}`;
+  $('confirmHead').textContent = `${r.project} · ${r.material === 'EPDM' ? 'EPDM gasket' : r.material + ' fasteners'} · Requester: ${r.requester}${st.extra ? ' · quantities include +5%' : ''}`;
   $('confirmBody').replaceChildren(...r.sections.flatMap(sec => [
     h('h3', {textContent: sec.title}),
     h('div', {className: 'scroll'}, h('table', {},
@@ -256,7 +261,7 @@ $('send').onclick = async () => {
     $('doneEmail').style.color = email === 'sent' ? '' : 'var(--bad)';
     $('download').href = URL.createObjectURL(new Blob([bytes], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
     $('download').download = name;
-    st.sections = [blank()]; keep(); render();
+    st.sections = [blank()]; st.extra = false; $('extra').checked = false; keep(); render();
     show('done');
   } catch (e) { fail('confirmError', e.message); }
   $('send').disabled = false; $('send').textContent = 'Confirm & send to administrator';

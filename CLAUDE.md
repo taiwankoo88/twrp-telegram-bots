@@ -18,7 +18,7 @@ This project generates fastener-order and gasket-order Excel files from private 
 - Combine flat washers only when location, diameter and thickness match.
 - Keep bolts separate by diameter and length.
 - Keep stud rods separate by diameter and length.
-- Do not add 5% unless the user explicitly asks for it.
+- Do not add 5% unless the user explicitly asks for it. On the order forms (web and static page, 2026-11-12) the optional "Add 5% to all quantities" box does this: each entered quantity is rounded up (qty × 1.05) before consolidation; unticked by default and reset after each order.
 - Include `Requester Name`; default to the Telegram sender's display name when omitted.
 - Every bolt designation must start with `FULL THREADED HEXAGON BOLT`.
 - Stud rods (HDG and SS316, user decision 2026-11-12) are written `FULL THREADED STUD ROD: M16, L=2000mm`; HDG stud rods use BS EN ISO 4190, G 8.8 (no longer refused). The fastener templates' subject reads `RFQ for Fastener (bolt, nut and washer)` (without "Steel Structure", user request 2026-11-12). The order forms label the buttons Hex bolt and Stud bolt.
@@ -61,3 +61,7 @@ The portable package excludes `node_modules`. The live installation uses a Windo
 
 After code changes, run syntax and relevant tests. For generation changes, inspect and render all three template variants (HDG, SS316, Gasket), and open the saved files in Excel: artifact-tool's own recalculation and preview can disagree with Excel. `test.mjs` exits with code 0xC0000409 after rendering even when every check passes, so judge it by its printed output. Restart the live bot only after tests pass.
 
+
+## Order form status (2026-11-12, user decision)
+
+The permanent link `https://taiwankoo88.github.io/twrp-telegram-bots/` now serves the static, PC-independent order page (`site/` published at the `gh-pages` root; `/form/` redirects to it). Its `config.js` `MAIL_URL` points at the user's Google Apps Script web app (email to the administrator plus a Google Sheet record); a real test order was received by email and in the Sheet. The PC web form (`web.mjs`), the Cloudflare tunnel and the `url.json` redirect are retired: the live `web.json` no longer has `pages`/`git`, `web-url.json` is removed, and `/web` in the bot replies with the permanent link. Deploy the page as described in the "Static order page" bullet, copying `site/*` plus `parser.mjs`, `items.mjs`, `xlsx.mjs` to the `gh-pages` root.
