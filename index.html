@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>TWRP C3D1/C3D2 Order Form</title>
+<style>body{font:17px/1.5 system-ui,"Segoe UI",Arial,sans-serif;margin:0;display:grid;place-items:center;min-height:100vh;background:#f2f5f8;color:#16202b;text-align:center;padding:20px}h1{font-size:22px}</style>
+</head>
+<body>
+<div><h1>TWRP C3D1 / C3D2</h1><p id="msg">Opening the order form…</p></div>
+<script>
+// The order form runs on the office PC behind an address that changes; url.json always holds the current one.
+fetch('url.json?t=' + Date.now(), {cache: 'no-store'}).then(r => r.json()).then(d => {
+  if (!/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(d.url)) throw Error('no address');
+  location.replace(d.url);
+}).catch(() => {
+  document.getElementById('msg').textContent = 'The order form is not available right now. Please try again in a few minutes, or send your order in Telegram.';
+});
+</script>
+</body>
+</html>
