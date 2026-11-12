@@ -105,7 +105,7 @@ import {MAIL_URL} from './config.js';
 const SIZES = [6, 8, 10, 12, 16, 20, 22, 24, 27, 30, 33, 36, 39, 42, 45, 48, 52, 56, 64];
 const DNS = [15, 20, 25, 32, 40, 50, 65, 80, 100, 125, 150, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000];
 const PNS = [6, 10, 16, 25, 40];
-const KIND = {bolt: 'Bolt', nut: 'Nut', washer: 'Flat washer', rod: 'Stud rod'};
+const KIND = {bolt: 'Hex bolt', nut: 'Nut', washer: 'Flat washer', rod: 'Stud bolt'};
 const MATERIALS = [['SS316', 'SS316'], ['HDG', 'HDG'], ['EPDM', 'Gasket']];
 const $ = id => document.getElementById(id);
 const store = {
@@ -182,7 +182,7 @@ function render() {
     const fastener = kind => () => ({kind, diameter: last()?.diameter || 16, qty: '', ...(kind === 'rod' ? {length: 2000} : {})});
     const adds = !st.material ? [h('span', {className: 'note', textContent: 'Choose the material above to add items.'})]
       : gasket ? [add('+ Gasket', () => ({dn: last()?.dn || 100, pn: last()?.pn || 10, thickness: last()?.thickness || '', qty: ''}))]
-      : [add('+ Bolt', fastener('bolt')), add('+ Nut', fastener('nut')), add('+ Washer', fastener('washer')), ...(st.material === 'SS316' ? [add('+ Stud rod', fastener('rod'))] : [])];
+      : [add('+ Hex bolt', fastener('bolt')), add('+ Nut', fastener('nut')), add('+ Washer', fastener('washer')), add('+ Stud bolt', fastener('rod'))];
     return h('div', {className: 'card'},
       h('div', {className: 'sec-head'},
         field(`Location / title ${st.sections.length > 1 ? i + 1 : ''}`, h('input', {value: sec.title, maxLength: 160, placeholder: 'e.g. WDL13 Membrane Tank Pipe Header Valve Connection', oninput: e => { sec.title = e.target.value; keep(); }})),
