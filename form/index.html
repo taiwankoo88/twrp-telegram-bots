@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TWRP C3D1/C3D2 Order Form</title>
+<style>
+  :root { --ink:#16202b; --muted:#5d6b7a; --line:#d5dce4; --bg:#f2f5f8; --card:#fff; --accent:#0b5cad; --accent-ink:#fff; --bad:#b3261e; --ok:#1a7f4b; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.4 system-ui,"Segoe UI",Arial,sans-serif; color:var(--ink); background:var(--bg); }
+  header { background:var(--accent); color:var(--accent-ink); padding:14px 16px; }
+  header h1 { margin:0; font-size:20px; }
+  header p { margin:2px 0 0; opacity:.85; font-size:14px; }
+  main { max-width:860px; margin:0 auto; padding:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:14px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+  label, .field { display:block; font-size:13px; font-weight:600; color:var(--muted); }
+  input, select { display:block; width:100%; margin-top:4px; padding:9px 10px; font:inherit; color:var(--ink); background:#fff; border:1px solid var(--line); border-radius:7px; }
+  input:focus, select:focus, button:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+  .seg { display:flex; gap:6px; margin-top:4px; flex-wrap:wrap; }
+  .seg button { flex:1; min-width:60px; white-space:nowrap; padding:9px 8px; font:inherit; font-weight:600; background:#fff; color:var(--ink); border:1px solid var(--line); border-radius:7px; cursor:pointer; }
+  .seg button[aria-pressed=true] { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  .sec-head { display:grid; grid-template-columns:1fr 110px 36px; gap:10px; align-items:end; }
+  .rows { margin:12px 0 4px; }
+  .row { display:grid; grid-template-columns:104px 1fr 1fr 1fr 36px; gap:8px; align-items:end; padding:8px 0; border-top:1px solid var(--line); }
+  .row .kind { font-weight:700; color:var(--ink); font-size:15px; padding-bottom:9px; }
+  .row .none { visibility:hidden; }
+  .x { height:40px; padding:0; font-size:20px; line-height:1; color:var(--muted); background:none; border:1px solid var(--line); border-radius:7px; cursor:pointer; }
+  .x:hover { color:var(--bad); border-color:var(--bad); }
+  .adds { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .adds button, .ghost { padding:9px 12px; font:inherit; font-weight:600; color:var(--accent); background:#fff; border:1px dashed var(--accent); border-radius:7px; cursor:pointer; }
+  .ghost { width:100%; margin-bottom:14px; }
+  .primary { width:100%; padding:13px; font:inherit; font-size:17px; font-weight:700; color:var(--accent-ink); background:var(--accent); border:0; border-radius:8px; cursor:pointer; }
+  .primary:disabled { opacity:.55; cursor:wait; }
+  .plain { width:100%; padding:11px; margin-top:10px; font:inherit; font-weight:600; background:#fff; color:var(--ink); border:1px solid var(--line); border-radius:8px; cursor:pointer; }
+  .error { color:var(--bad); font-weight:600; white-space:pre-wrap; background:#fdecea; border:1px solid #f3c1bc; border-radius:8px; padding:10px 12px; }
+  .note { color:var(--muted); font-size:14px; }
+  .scroll { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; font-size:14px; }
+  th, td { border:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }
+  th { background:#eaf0f6; white-space:nowrap; }
+  td.q { text-align:right; font-weight:700; white-space:nowrap; }
+  h2 { font-size:17px; margin:0 0 8px; }
+  h3 { font-size:15px; margin:14px 0 6px; }
+  .okbox { border-color:var(--ok); }
+  .okbox h2 { color:var(--ok); }
+  a.primary { display:block; text-align:center; text-decoration:none; margin-top:12px; }
+  [hidden], .nocode #codeField { display:none !important; }
+  @media (max-width:560px) {
+    .row { grid-template-columns:1fr 1fr 1fr 36px; }
+    .row .kind { grid-column:1 / -1; padding-bottom:0; }
+    .row .none { display:none; }
+    .sec-head { grid-template-columns:1fr 36px; }
+    .sec-head .sets { grid-column:1 / -1; grid-row:2; }
+  }
+</style>
+</head>
+<body>
+<header><h1>TWRP C3D1 / C3D2</h1><p>Fastener &amp; gasket order form</p></header>
+
+<main id="form">
+  <div class="card grid">
+    <label>Requester name<input id="requester" maxlength="100" autocomplete="name"></label>
+    <div class="field">Project<div class="seg" id="project"></div></div>
+    <div class="field">Material<div class="seg" id="material"></div></div>
+  </div>
+  <div id="sections"></div>
+  <button class="ghost" id="addSection" type="button">+ Add another location / title</button>
+  <p class="error" id="error" hidden></p>
+  <button class="primary" id="review" type="button">Review order</button>
+  <p class="note">One order = one project and one material. Order gaskets separately from bolts, nuts and washers. No extra 5% is added.</p>
+</main>
+
+<main id="confirm" hidden>
+  <div class="card">
+    <h2>Check your order</h2>
+    <p class="note" id="confirmHead"></p>
+    <div id="confirmBody"></div>
+    <p class="note">This is exactly what the Excel file will list. Matching nuts, washers and gaskets under the same title are combined; bolts and stud rods stay separate by length.</p>
+  </div>
+  <p class="error" id="confirmError" hidden></p>
+  <button class="primary" id="send" type="button">Confirm &amp; send to administrator</button>
+  <button class="plain" id="back" type="button">Back to edit</button>
+</main>
+
+<main id="done" hidden>
+  <div class="card okbox">
+    <h2>Order submitted</h2>
+    <p id="doneSubject"></p>
+    <p id="doneEmail"></p>
+    <a class="primary" id="download" href="#">Download the Excel file</a>
+  </div>
+  <button class="plain" id="again" type="button">Start a new order</button>
+</main>
+
+<script type="module">
+// Static order page (GitHub Pages): nothing here needs the office PC. The order is checked by the bot's own
+// parser, the workbook is built in the browser from a base file the bot generated (xlsx.mjs), and the file is
+// handed to a Google Apps Script web app (config.js MAIL_URL) that emails it to the administrator.
+import {parseOrder} from './parser.mjs';
+import {describeItem, mailSubject, orderText, sectionLines} from './items.mjs';
+import {buildWorkbook, orderFileName} from './xlsx.mjs';
+import {MAIL_URL} from './config.js';
+
+const SIZES = [6, 8, 10, 12, 16, 20, 22, 24, 27, 30, 33, 36, 39, 42, 45, 48, 52, 56, 64];
+const DNS = [15, 20, 25, 32, 40, 50, 65, 80, 100, 125, 150, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000];
+const PNS = [6, 10, 16, 25, 40];
+const KIND = {bolt: 'Bolt', nut: 'Nut', washer: 'Flat washer', rod: 'Stud rod'};
+const MATERIALS = [['SS316', 'SS316'], ['HDG', 'HDG'], ['EPDM', 'Gasket']];
+const $ = id => document.getElementById(id);
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+const blank = () => ({title: '', sets: '', items: []});
+let st = {project: '', material: '', sections: [blank()]};
+try { const saved = JSON.parse(store.get('draft')); if (saved && Array.isArray(saved.sections) && saved.sections.length) st = saved; } catch {}
+let nonce = '';
+const keep = () => store.set('draft', JSON.stringify(st));
+
+function h(tag, props = {}, ...kids) {
+  const el = Object.assign(document.createElement(tag), props);
+  el.append(...kids.filter(k => k !== null && k !== undefined));
+  return el;
+}
+function field(label, input) { return h('label', {}, label, input); }
+function number(value, set, extra = {}) {
+  return h('input', {type: 'number', inputMode: 'decimal', min: '0', value: value ?? '', oninput: e => { set(e.target.value); keep(); }, ...extra});
+}
+// A list of usual values with "Other…" for anything else.
+function pick(values, value, prefix, set) {
+  const all = value && !values.includes(Number(value)) ? [...values, Number(value)].sort((a, b) => a - b) : values;
+  const sel = h('select', {}, ...all.map(v => h('option', {value: v, textContent: prefix + v, selected: Number(value) === v})), h('option', {value: 'other', textContent: 'Other…'}));
+  sel.onchange = () => {
+    if (sel.value === 'other') {
+      const n = Number(prompt(`Enter the ${prefix} number`));
+      set(Number.isInteger(n) && n > 0 ? n : value);
+      render();
+    } else set(Number(sel.value));
+    keep();
+  };
+  return sel;
+}
+function seg(id, options, key) {
+  $(id).replaceChildren(...options.map(([value, text]) => h('button', {type: 'button', textContent: text, ariaPressed: String(st[key] === value), onclick: () => {
+    if (key === 'material' && st.material && (value === 'EPDM') !== (st.material === 'EPDM') && st.sections.some(s => s.items.length)) {
+      if (!confirm('Gaskets and fasteners are separate orders. Switching clears the items entered so far. Continue?')) return;
+      st.sections.forEach(s => s.items = []);
+    }
+    if (key === 'material' && value === 'HDG') st.sections.forEach(s => s.items = s.items.filter(i => i.kind !== 'rod'));
+    st[key] = value; keep(); render();
+  }})));
+}
+
+function itemRow(sec, item) {
+  const remove = h('button', {type: 'button', className: 'x', textContent: '×', title: 'Remove this row', onclick: () => { sec.items.splice(sec.items.indexOf(item), 1); keep(); render(); }});
+  const qty = field('Quantity', number(item.qty, v => item.qty = v, {inputMode: 'numeric', step: '1', placeholder: 'pcs'}));
+  if (st.material === 'EPDM') return h('div', {className: 'row'},
+    h('div', {className: 'kind', textContent: 'Gasket'}),
+    field('Size', pick(DNS, item.dn, 'DN', v => item.dn = v)),
+    h('div', {className: 'grid2'}, field('PN / thickness mm', h('div', {style: 'display:flex;gap:6px'}, pick(PNS, item.pn, 'PN', v => item.pn = v), number(item.thickness, v => item.thickness = v, {placeholder: '3', step: 'any', title: 'Thickness in mm (3 if left empty)'})))),
+    qty, remove);
+  const washerDefault = () => Number(item.diameter) <= 20 ? 3 : 4;
+  let third;
+  if (item.kind === 'nut') third = h('label', {className: 'none'}, '-', h('input', {disabled: true}));
+  else if (item.kind === 'washer') {
+    const thk = number(item.thickness, v => item.thickness = v, {placeholder: washerDefault(), step: 'any'});
+    third = field('Thickness mm', thk);
+    third.dataset.washer = '1';
+  } else third = field('Length mm', number(item.length, v => item.length = v, {inputMode: 'numeric', step: '1', placeholder: item.kind === 'rod' ? '2000' : 'e.g. 65'}));
+  const size = pick(SIZES, item.diameter, 'M', v => { item.diameter = v; const t = third.dataset.washer && third.querySelector('input'); if (t) t.placeholder = washerDefault(); });
+  return h('div', {className: 'row'}, h('div', {className: 'kind', textContent: KIND[item.kind]}), field('Size', size), third, qty, remove);
+}
+
+function render() {
+  seg('project', [['C3D1', 'C3D1'], ['C3D2', 'C3D2']], 'project');
+  seg('material', MATERIALS, 'material');
+  const gasket = st.material === 'EPDM';
+  $('sections').replaceChildren(...st.sections.map((sec, i) => {
+    const last = () => sec.items[sec.items.length - 1];
+    const add = (text, make) => h('button', {type: 'button', textContent: text, onclick: () => { sec.items.push(make()); keep(); render(); }});
+    const fastener = kind => () => ({kind, diameter: last()?.diameter || 16, qty: '', ...(kind === 'rod' ? {length: 2000} : {})});
+    const adds = !st.material ? [h('span', {className: 'note', textContent: 'Choose the material above to add items.'})]
+      : gasket ? [add('+ Gasket', () => ({dn: last()?.dn || 100, pn: last()?.pn || 10, thickness: last()?.thickness || '', qty: ''}))]
+      : [add('+ Bolt', fastener('bolt')), add('+ Nut', fastener('nut')), add('+ Washer', fastener('washer')), ...(st.material === 'SS316' ? [add('+ Stud rod', fastener('rod'))] : [])];
+    return h('div', {className: 'card'},
+      h('div', {className: 'sec-head'},
+        field(`Location / title ${st.sections.length > 1 ? i + 1 : ''}`, h('input', {value: sec.title, maxLength: 160, placeholder: 'e.g. WDL13 Membrane Tank Pipe Header Valve Connection', oninput: e => { sec.title = e.target.value; keep(); }})),
+        h('label', {className: 'sets'}, 'Sets (optional)', number(sec.sets, v => sec.sets = v, {inputMode: 'numeric', step: '1', placeholder: '1', title: 'Quantities below are per set and are multiplied by this number'})),
+        st.sections.length > 1 ? h('button', {type: 'button', className: 'x', textContent: '×', title: 'Remove this location', onclick: () => { if (!sec.items.length || confirm('Remove this location and its items?')) { st.sections.splice(i, 1); keep(); render(); } }}) : h('span')),
+      h('div', {className: 'rows'}, ...sec.items.map(item => itemRow(sec, item))),
+      h('div', {className: 'adds'}, ...adds));
+  }));
+}
+
+function show(id) { for (const m of ['form', 'confirm', 'done']) $(m).hidden = m !== id; scrollTo(0, 0); }
+function fail(id, message) { $(id).textContent = message; $(id).hidden = !message; if (message) $(id).scrollIntoView({block: 'center'}); }
+const current = () => parseOrder(orderText({...st, requester: $('requester').value}));
+// Singapore time, written like the bot's emails, e.g. 15 Sep 2026 14:05.
+function stamp(when) {
+  const d = new Date(when.getTime() + 8 * 3600e3), two = x => String(x).padStart(2, '0');
+  return `${d.getUTCDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[d.getUTCMonth()]} ${d.getUTCFullYear()} ${two(d.getUTCHours())}:${two(d.getUTCMinutes())}`;
+}
+function base64(bytes) {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(binary);
+}
+
+$('requester').value = store.get('requester') || '';
+$('requester').oninput = e => store.set('requester', e.target.value);
+$('addSection').onclick = () => { st.sections.push(blank()); keep(); render(); };
+
+$('review').onclick = () => {
+  fail('error', '');
+  let r;
+  try { r = current(); } catch (e) { fail('error', e.message); return; }
+  $('confirmHead').textContent = `${r.project} · ${r.material === 'EPDM' ? 'EPDM gasket' : r.material + ' fasteners'} · Requester: ${r.requester}`;
+  $('confirmBody').replaceChildren(...r.sections.flatMap(sec => [
+    h('h3', {textContent: sec.title}),
+    h('div', {className: 'scroll'}, h('table', {},
+      h('tr', {}, ...['Designation', 'Standard', r.material === 'EPDM' ? 'PN' : 'Strength', 'Qty', 'Remarks'].map(t => h('th', {textContent: t}))),
+      ...sec.items.map(item => { const it = describeItem(r.material, item); return h('tr', {}, h('td', {textContent: it.designation}), h('td', {textContent: it.standard}), h('td', {textContent: it.grade}), h('td', {className: 'q', textContent: item.qty.toLocaleString('en-US')}), h('td', {textContent: it.remark || ''})); }))),
+  ]));
+  nonce = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random();
+  fail('confirmError', '');
+  show('confirm');
+};
+$('back').onclick = () => show('form');
+$('send').onclick = async () => {
+  fail('confirmError', '');
+  $('send').disabled = true; $('send').textContent = 'Generating the Excel file and emailing… please wait';
+  try {
+    const order = current(), name = orderFileName(order), now = new Date();
+    const template = await fetch(`base/${order.project}-${order.material}.xlsx`);
+    if (!template.ok) throw Error('The Excel template could not be loaded. Check your connection and try again.');
+    const bytes = await buildWorkbook(order, await template.arrayBuffer(), now);
+    const subject = mailSubject(order);
+    const body = [...order.sections.map(sec => sectionLines(order.material, sec).join('\n')), `Requester: ${order.requester} · Sent by: ${order.requester} (web order form) · ${stamp(now)}\nAttachment: ${name}`].join('\n\n');
+    let email = 'off';
+    if (MAIL_URL) {
+      email = 'failed';
+      try {
+        const rows = order.sections.flatMap(sec => sec.items.map(item => { const it = describeItem(order.material, item); return [order.requester, order.project, order.material, sec.title, it.designation, it.standard, it.grade, item.qty, it.remark || '']; }));
+        const res = await fetch(MAIL_URL, {method: 'POST', body: JSON.stringify({nonce, filename: name, file: base64(bytes), subject, body, rows}), signal: AbortSignal.timeout(90000)});
+        const out = await res.json();
+        if (out.ok) email = 'sent'; else if (out.error) throw Object.assign(Error(out.error), {shown: true});
+      } catch (e) { if (e.shown) throw e; }
+    }
+    $('doneSubject').textContent = subject;
+    $('doneEmail').textContent = {
+      sent: 'The Excel file has been emailed to the administrator.',
+      failed: 'The Excel file was generated, but the email could not be sent. Please download the file below and send it to the administrator yourself.',
+      off: 'The Excel file was generated. Email is not set up yet; please download the file below and send it to the administrator yourself.',
+    }[email];
+    $('doneEmail').style.color = email === 'sent' ? '' : 'var(--bad)';
+    $('download').href = URL.createObjectURL(new Blob([bytes], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+    $('download').download = name;
+    st.sections = [blank()]; keep(); render();
+    show('done');
+  } catch (e) { fail('confirmError', e.message); }
+  $('send').disabled = false; $('send').textContent = 'Confirm & send to administrator';
+};
+$('again').onclick = () => show('form');
+render();
+</script>
+</body>
+</html>
