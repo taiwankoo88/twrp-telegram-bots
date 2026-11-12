@@ -13,7 +13,7 @@ export function describeItem(material, item) {
     grade: `PN${item.pn}`,
     remark,
   };
-  const label = {bolt:'FULL THREADED HEXAGON BOLT', nut:'HEXAGON NUT',washer:'FLAT WASHER',rod:'STUD ROD'}[item.kind];
+  const label = {bolt:'FULL THREADED HEXAGON BOLT', nut:'HEXAGON NUT',washer:'FLAT WASHER',rod: material === 'HDG' ? 'FULL THREADED STUD ROD' : 'STUD ROD'}[item.kind];
   const suffix = item.kind === 'washer' ? ` X ${item.length}mm thk.` : item.length ? `, L=${item.length}mm` : '';
   return {
     designation: `${label}: M${item.diameter}${suffix}`,
