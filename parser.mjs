@@ -59,9 +59,13 @@ function fastenerItem(body, original, material) {
   const mats = body.match(/\b(?:SS316|SS16|HDG|SS)\b/gi) || [];
   for (const mat of mats) if ((/^SS/i.test(mat) ? 'SS316' : 'HDG') !== material) throw Error(`Material conflict: ${original}. Send different materials in separate orders.`);
   body = body.replace(/\b(?:SS316|SS16|HDG|SS)\b/gi, '').trim();
-  const kindMatch = body.match(/\b(stud\s*rod|threaded\s*rod|flat\s*washer|washer|hex(?:agon)?\s*bolt|bolt|hex(?:agon)?\s*nut|nut)\b/i);
-  if (!kindMatch) throw Error(`Item type not recognized: ${original}. Specify bolt, nut, washer or stud rod.`);
-  const kind = /rod/i.test(kindMatch[0]) ? 'rod' : /washer/i.test(kindMatch[0]) ? 'washer' : /nut/i.test(kindMatch[0]) ? 'nut' : 'bolt';
+  // Wedge anchors (HDG only, EAD 330232, added 2026-11-19) come with their own nut and washer, so "wedge anchor
+  // c/w nut & washer" is one item; they are checked before bolt / nut / washer.
+  if (/\bwedge\s*anchor/i.test(body)) body = body.replace(/\s*(?:c\/w|with|complete\s*with)\s*(?:hex(?:agon)?\s*)?nuts?\s*(?:&|and|\+|,)\s*(?:flat\s*)?washers?\b/i, ' ').trim();
+  const kindMatch = body.match(/\b(wedge\s*anchors?(?:\s*bolts?)?|stud\s*rod|threaded\s*rod|flat\s*washer|washer|hex(?:agon)?\s*bolt|bolt|hex(?:agon)?\s*nut|nut)\b/i);
+  if (!kindMatch) throw Error(`Item type not recognized: ${original}. Specify bolt, nut, washer, stud rod or wedge anchor.`);
+  const kind = /wedge/i.test(kindMatch[0]) ? 'anchor' : /rod/i.test(kindMatch[0]) ? 'rod' : /washer/i.test(kindMatch[0]) ? 'washer' : /nut/i.test(kindMatch[0]) ? 'nut' : 'bolt';
+  if (kind === 'anchor' && material !== 'HDG') throw Error(`Wedge anchors are ordered as HDG only (EAD 330232): ${original}. Send them in a C3D1 HDG or C3D2 HDG order.`);
   body = body.replace(kindMatch[0], '').trim();
   body = body.replace(/\b(?:length|L)\s*=?\s*/i, 'x');
   const size = body.match(/^M\s*(\d+)\s*(?:x\s*(\d+(?:\.\d+)?)\s*(mm|m)?\s*(?:thk\.?)?)?\s*$/i);
@@ -69,7 +73,7 @@ function fastenerItem(body, original, material) {
   const diameter = positive(size[1]);
   let length = size[2] ? Number(size[2]) * (size[3]?.toLowerCase() === 'm' ? 1000 : 1) : null;
   if (kind === 'nut' && length !== null) throw Error(`A nut does not require a length: ${original}`);
-  if ((kind === 'bolt' || kind === 'rod') && (!length || !Number.isInteger(length))) throw Error(`Specify a length in whole millimetres: ${original}`);
+  if ((kind === 'bolt' || kind === 'rod' || kind === 'anchor') && (!length || !Number.isInteger(length))) throw Error(`Specify a length in whole millimetres: ${original}`);
   // Washer thickness: M20 and below 3 mm; M24 and above at least 4 mm (user rule, 2026-10-09).
   if (kind === 'washer' && length === null) length = diameter <= 20 ? 3 : 4;
   if (kind === 'washer' && (!length || length > 20)) throw Error('Specify the washer thickness. Example: M16x3mm washer = 200.');

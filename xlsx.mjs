@@ -52,7 +52,8 @@ export async function zip(files) {
 
 // ---- sheet ----
 const esc = s => String(s).replace(/[^\x09\x0A\x0D\x20-�]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const str = v => ({t: 'str', v}), n = v => ({t: 'n', v});
+// An empty text (the wedge anchor's blank strength) is written without a value, as excel.mjs writes it.
+const str = v => ({t: 'str', v: v === '' ? undefined : v}), n = v => ({t: 'n', v});
 
 // Rows of the base sheet: attributes, and each cell's column, style and (for the shared reinforcement text) content.
 function readRows(xml) {
