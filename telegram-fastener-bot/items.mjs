@@ -13,6 +13,8 @@ export function describeItem(material, item) {
     grade: `PN${item.pn}`,
     remark,
   };
+  // Wedge anchor (HDG only, user request 2026-11-19): standard EAD 330232; no strength grade was given for it.
+  if (item.kind === 'anchor') return {designation: `WEDGE ANCHOR: M${item.diameter}, L=${item.length}mm`, standard: 'EAD 330232', grade: '', remark};
   const label = {bolt:'FULL THREADED HEXAGON BOLT', nut:'HEXAGON NUT',washer:'FLAT WASHER',rod:'FULL THREADED STUD ROD'}[item.kind];
   const suffix = item.kind === 'washer' ? ` X ${item.length}mm thk.` : item.length ? `, L=${item.length}mm` : '';
   return {
@@ -73,8 +75,8 @@ export function orderText(form) {
       const d = num(item.diameter, 'Size', where);
       if (item.kind === 'nut') lines.push(`M${d} nut = ${qty}`);
       else if (item.kind === 'washer') lines.push(`M${d}${item.thickness ? `x${num(item.thickness, 'Washer thickness', where, false)}mm` : ''} washer = ${qty}`);
-      else if (item.kind === 'bolt' || item.kind === 'rod') lines.push(`M${d}x${num(item.length, 'Length', where)}mm ${item.kind === 'rod' ? 'stud rod' : 'bolt'} = ${qty}`);
-      else throw Error(`Choose bolt, nut, washer or stud rod (${where}).`);
+      else if (item.kind === 'bolt' || item.kind === 'rod' || item.kind === 'anchor') lines.push(`M${d}x${num(item.length, 'Length', where)}mm ${{rod: 'stud rod', anchor: 'wedge anchor', bolt: 'bolt'}[item.kind]} = ${qty}`);
+      else throw Error(`Choose bolt, nut, washer, stud rod or wedge anchor (${where}).`);
     }
   }
   return lines.join('\n');

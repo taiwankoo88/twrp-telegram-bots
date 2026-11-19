@@ -11,7 +11,7 @@ import {buildWorkbook, orderFileName, unzip} from './xlsx.mjs';
 const root = path.dirname(fileURLToPath(import.meta.url));
 const long = n => Array.from({length: n}, (_, i) => `M${[10, 12, 16, 20, 24, 30][i % 6]}x${40 + i * 5}mm bolt = ${(i + 1) * 10}`).join('\n');
 const orders = [
-  `C3D2 HDG\nRequester Name: Web Tester\nTitle: WDL21 Platform handrail\nSets: 50\nM12x135mm bolt = 1\nM12 nut = 3\nM12x3mm washer = 4\nTitle: WDL12 Chemical Hanging Piperack add-on, replacement to ST311-22048, a long title that wraps over more than one line in the sheet\nM16x60mm bolt = 400\nM16 nut = 500\nM16 nut = 55\nM30 washer = 12`,
+  `C3D2 HDG\nRequester Name: Web Tester\nTitle: WDL21 Platform handrail\nSets: 50\nM12x135mm bolt = 1\nM12 nut = 3\nM12x3mm washer = 4\nTitle: WDL12 Chemical Hanging Piperack add-on, replacement to ST311-22048, a long title that wraps over more than one line in the sheet\nM16x60mm bolt = 400\nM16 nut = 500\nM16 nut = 55\nM30 washer = 12\nM12x100mm wedge anchor = 40\nM12x100mm wedge anchor = 8`,
   `C3D1 SS316\nRequester Name: A & B <Test>\nTitle: WDL13 Membrane Tank Pipe Header Valve Connection\nM16x110mm bolt = 2880\nM16 nut = 2880\nM16x130mm bolt = 5760\nM16 nut = 5760\nM16 nut = 10\nM16 nut = 20\nM16 nut = 30\nM16x3mm flat washer = 17280\nM16x2m stud rod = 7\nTitle: =Second\nM24 washer = 5`,
   `C3D1 SS316\nRequester Name: Long\n${Array.from({length: 6}, (_, s) => `Title: WDL1${s} Area\n${long(14)}`).join('\n')}`,
   `C3D2 HDG\nRequester Name: One\nTitle: Single\nM20 nut = 1`,

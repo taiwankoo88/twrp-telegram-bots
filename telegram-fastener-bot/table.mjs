@@ -24,10 +24,12 @@ export async function readGrid(xlsxPath) {
   return values.map(row => row.map(clean));
 }
 
-const KINDS = [['rod', /stud|\brod\b/i], ['washer', /washer/i], ['nut', /\bnuts?\b/i], ['bolt', /\bbolts?\b/i]];
+const KINDS = [['anchor', /wedge|anchor/i], ['rod', /stud|\brod\b/i], ['washer', /washer/i], ['nut', /\bnuts?\b/i], ['bolt', /\bbolts?\b/i]];
 // A worded item description: the item type comes before the size (HEXAGONBOLT:M10, NUT: M12, WASHER:M20X3mm).
 // The item word may come before or after the size (HEXAGON BOLT M10, M16 Nut, M16Nut).
-const DESCRIPTION = /(?:bolt|nut|washer|stud|rod)[^]*?M\s?\d{1,2}(?![\d.])|M\s?\d{1,2}(?![\d.])[^]*?(?:bolt|nut|washer|stud|rod)/i;
+const DESCRIPTION = /(?:bolt|nut|washer|stud|rod|anchor)[^]*?M\s?\d{1,2}(?![\d.])|M\s?\d{1,2}(?![\d.])[^]*?(?:bolt|nut|washer|stud|rod|anchor)/i;
+// Items that need a length, and their names in the text order format (wedge anchors added 2026-11-19, HDG only).
+const LONG = {bolt: 'bolt', rod: 'stud rod', anchor: 'wedge anchor'};
 const PERCENT = /\b\d+(?:\.\d+)?\s*%/;
 
 // SS316 or HDG as named or implied (A4-70 / A4-80 grades, Gr 8.8) by a piece of table text.
@@ -111,9 +113,9 @@ function fromColumns(rows, headerIndex) {
       if (!raw || raw === '-') continue;
       if (!/^\d+$/.test(raw)) { problems.push(`Quantity not recognized for ${size}: ${row[col.index]}`); continue; }
       if (Number(raw) === 0) continue;
-      if (col.kind === 'bolt' || col.kind === 'rod') {
-        if (!length) { problems.push(`${size}: a ${col.kind === 'rod' ? 'stud rod' : 'bolt'} needs a length, for example M24x210`); continue; }
-        lines.push(`M${diameter}x${length}${unit} ${col.kind === 'rod' ? 'stud rod' : 'bolt'} = ${raw}`);
+      if (LONG[col.kind]) {
+        if (!length) { problems.push(`${size}: a ${LONG[col.kind]} needs a length, for example M24x210`); continue; }
+        lines.push(`M${diameter}x${length}${unit} ${LONG[col.kind]} = ${raw}`);
       } else if (col.kind === 'nut') lines.push(`M${diameter} nut = ${raw}`);
       else lines.push(`M${diameter}${col.thickness ? `x${col.thickness}mm` : ''} washer = ${raw}`);
     }
@@ -153,7 +155,8 @@ function fromList(rows) {
     if (Number(raw) === 0) continue;
     // OCR runs words together (BS4190NUTSA4-70), so NUT needs no word break after it.
     const found = [/stud|rod\b/i, /washer/i, /nut/i, /bolt/i].map(re => re.test(text));
-    const kind = found[0] ? 'rod' : found.slice(1).filter(Boolean).length > 1 ? null : ['washer', 'nut', 'bolt'][found.slice(1).indexOf(true)];
+    // A wedge anchor row may add "c/w nut & washer": it is still one item.
+    const kind = /wedge\s*anchor/i.test(text) ? 'anchor' : found[0] ? 'rod' : found.slice(1).filter(Boolean).length > 1 ? null : ['washer', 'nut', 'bolt'][found.slice(1).indexOf(true)];
     if (!kind) { problems.push(`One row names more than one item, please list them separately: ${shown}`); continue; }
     const diameter = text.match(/M\s?(\d{1,2})(?![\d.])/i)[1];
     const grade = text.match(/Gr(?:ade)?\.?\s*(\d+\.\d)/i)?.[1];
@@ -163,10 +166,10 @@ function fromList(rows) {
     if (material) materials.add(material);
     // OCR often merges words (M10X3mmTHKS, L=50mm）), so units are not followed by a word boundary.
     const times = text.match(/M\s?\d{1,2}\s*[xX×*]\s*(\d+(?:\.\d+)?)\s*(mm|m)?/i);
-    if (kind === 'bolt' || kind === 'rod') {
+    if (LONG[kind]) {
       const length = text.match(/\bL(?:ength)?\s*[=:：]\s*(\d+(?:\.\d+)?)\s*(mm|m)?/i) || times;
-      if (!length) { problems.push(`${shown}: a ${kind === 'rod' ? 'stud rod' : 'bolt'} needs a length, for example L=45mm`); continue; }
-      lines.push(`M${diameter}x${length[1]}${length[2]?.toLowerCase() || 'mm'} ${kind === 'rod' ? 'stud rod' : 'bolt'} = ${raw}`);
+      if (!length) { problems.push(`${shown}: a ${LONG[kind]} needs a length, for example L=45mm`); continue; }
+      lines.push(`M${diameter}x${length[1]}${length[2]?.toLowerCase() || 'mm'} ${LONG[kind]} = ${raw}`);
     } else if (kind === 'nut') lines.push(`M${diameter} nut = ${raw}`);
     else {
       const thickness = (times && /mm/i.test(times[2] || '') ? times : null) || text.match(/(\d+(?:\.\d+)?)\s*(?:mm)?\s*(?:THK|THICK|T\b)/i) || text.match(/THK\.?\s*(\d+(?:\.\d+)?)/i);

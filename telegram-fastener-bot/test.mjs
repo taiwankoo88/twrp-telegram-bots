@@ -5,6 +5,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {parseOrder,example,gasketExample} from './parser.mjs';
 import {generate} from './excel.mjs';
+import {describeItem,orderText} from './items.mjs';
 import {latestDueWeek,loadOrders,nextWeek,orderNotice,summaryText,summaryWorkbook,weekOf} from './summary.mjs';
 import {archiveDeleted,deleteBody,deleteSubject,findOrder,mailBody,mailSubject} from './mail.mjs';
 import {formatDates,generateSteelForms,isSteelForm,parseSteelForm,steelExample,steelNotice} from './steel.mjs';
@@ -26,6 +27,15 @@ M16x100mm bolt = 1
 M16 nut = 3
 M16x3mm washer = 4`,'Test Requester');
 assert.deepEqual(hdg.sections.map(s=>s.items.map(x=>x.qty)),[[50,150,200],[50,150,200]]);
+// Wedge anchors (2026-11-19): HDG only, EAD 330232, kept separate by size and length, "c/w nut & washer" is one item.
+const anchors=parseOrder('C3D2 HDG\nTitle: WDL21 Cable tray\nM12x100mm wedge anchor = 40\nWedge Anchor M12X100 c/w nut & washer = 10\nM12x120mm HDG wedge anchors = 5\nM12 nut = 6','Test');
+assert.deepEqual(anchors.sections[0].items.map(x=>[x.kind,x.diameter,x.length,x.qty]),[['anchor',12,100,50],['anchor',12,120,5],['nut',12,null,6]]);
+assert.deepEqual(describeItem('HDG',anchors.sections[0].items[0]),{designation:'WEDGE ANCHOR: M12, L=100mm',standard:'EAD 330232',grade:'',remark:'Combined: 40 + 10'});
+assert.throws(()=>parseOrder('C3D1 SS316\nTitle: X\nM12x100mm wedge anchor = 4','Test'),/HDG only/);
+assert.throws(()=>parseOrder('C3D1 HDG\nTitle: X\nM12 wedge anchor = 4','Test'),/length/);
+assert.equal(orderText({project:'C3D2',material:'HDG',requester:'T',sections:[{title:'X',items:[{kind:'anchor',diameter:12,length:100,qty:8}]}]}).split('\n').at(-1),'M12x100mm wedge anchor = 8');
+assert.deepEqual(gridToOrderLines([['Item','Qty'],['Wedge Anchor M12X100 c/w nut & washer','30'],['HEXAGON BOLT: M12 Gr 8.8, L=45mm','5']]).lines,['M12x100mm wedge anchor = 30','M12x45mm bolt = 5']);
+assert.deepEqual(gridToOrderLines([['HDG','Bolt','Wedge anchor'],['M12X100','','20']]).lines,['M12x100mm wedge anchor = 20']);
 const rod=parseOrder('C3D1 SS316\nTitle: WDL12 chemical support\nM16x2m SS stud rod = 20\nM16 washer = 200','Test');
 assert.equal(rod.sections[0].items[0].length,2000);
 assert.equal(rod.sections[0].items[1].length,3);
@@ -203,7 +213,7 @@ const gridFile=path.join(os.tmpdir(),`grid-${Date.now()}.xlsx`); await (await Sp
 assert.deepEqual(await readGrid(gridFile),[['SS316','Bolt','Nut','Washer'],['M24X210','630','630','1260'],['M20x35(Bolt only)','96','','']]);
 await fs.rm(gridFile,{force:true});
 console.log('Table order checks passed: grid to lines, caption checks, consolidation, Excel reading.');
-for (const [name,order] of [['ss316-test',ss],['hdg-test',hdg],['long-test',long],['gasket-test',gasket],['table-test',tableOrder],['list-table-test',listOrder]]) console.log(await generate(order,name,true));
+for (const [name,order] of [['ss316-test',ss],['hdg-test',hdg],['anchor-test',anchors],['long-test',long],['gasket-test',gasket],['table-test',tableOrder],['list-table-test',listOrder]]) console.log(await generate(order,name,true));
 console.log('All workbook exports and numeric/formula verification passed.');
 // Weekly summaries: Monday-to-Sunday weeks in Singapore time, each due the following Monday at 09:00.
 assert.equal(weekOf(Date.parse('2026-09-20T23:59:00+08:00')),'2026-09-14');
